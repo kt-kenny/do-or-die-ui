@@ -8,6 +8,7 @@ export default function HostRoomComponent() {
 
     return (
         <div className="m-4 border-8">
+            <Label className="font-bold border-2 text-lg"> HOST A ROOM: </Label>
             <Label>Room Code</Label>
             <Input onChange={(e) => setRoomCode(e.target.value)}></Input>
             <Button onClick={() => hostRoom(roomCode, setMessage)}>

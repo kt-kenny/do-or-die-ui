@@ -12,47 +12,47 @@ export default function Lobby() {
   );
 }
 
-interface GameState {
-  roomCode: string;
-  players: Player[];
-  dares: Dare[];
-  tiles: TileType[];
-  currentPlayer: string;
-  phase: string;
-}
+// interface GameState {
+//   roomCode: string;
+//   players: Player[];
+//   dares: Dare[];
+//   tiles: TileType[];
+//   currentPlayer: string;
+//   phase: string;
+// }
 
-interface Player {
-  name: string;
-  currentTile: number;
-}
-interface Dare {
-  id: UUID;
-  desc: string;
-}
+// interface Player {
+//   name: string;
+//   currentTile: number;
+// }
+// interface Dare {
+//   id: UUID;
+//   desc: string;
+// }
 
-const TileType = {
-  DIE: "DIE",
-  DO_OR_DIE: "DO_OR_DIE",
-  END: "END",
-  MOVE_X_SPACES: "MOVE_X_SPACES",
-  EMPTY: "EMPTY",
-};
-type TileType = (typeof TileType)[keyof typeof TileType];
+// const TileType = {
+//   DIE: "DIE",
+//   DO_OR_DIE: "DO_OR_DIE",
+//   END: "END",
+//   MOVE_X_SPACES: "MOVE_X_SPACES",
+//   EMPTY: "EMPTY",
+// };
+// type TileType = (typeof TileType)[keyof typeof TileType];
 
-type UUID = string;
+// type UUID = string;
 
-const gamestate: GameState = {
-  roomCode: "qwetty2",
-  players: [],
-  dares: [
-    { id: "id1", desc: "dare1" },
-    { id: "id2", desc: "dare2" },
-    { id: "id3", desc: "dare3" },
-  ],
-  tiles: [],
-  currentPlayer: "",
-  phase: "",
-};
+// const gamestate: GameState = {
+//   roomCode: "qwetty2",
+//   players: [],
+//   dares: [
+//     { id: "id1", desc: "dare1" },
+//     { id: "id2", desc: "dare2" },
+//     { id: "id3", desc: "dare3" },
+//   ],
+//   tiles: [],
+//   currentPlayer: "",
+//   phase: "",
+// };
 
 function ScrollList() {
   const items = [

@@ -1,9 +1,10 @@
 import HostRoomComponent from "./HostRoomComponent";
-import JoinRoomComponent from "../Home/components/JoinRoom";
+import JoinRoomComponent from "./JoinRoomComponent";
 import GetGameStateComponent from "./GetGameStateComponent";
 import CreateRoomComponent from "./CreateRoomComponent";
 
 export default function Test() {
+
     return (
         <div>
             <CreateRoomComponent></CreateRoomComponent>
@@ -13,3 +14,5 @@ export default function Test() {
         </div>
     );
 }
+
+// type GameRole = "HOST" | "PLAYER" | null;

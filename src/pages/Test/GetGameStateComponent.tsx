@@ -9,6 +9,7 @@ export default function GetGameStateComponent() {
     const [gameState, setGameState] = useState<string>("");
     return (
         <div className="m-4 border-8">
+            <Label className="font-bold border-2 text-lg">GET GAME ROOM:</Label>
             <div className="flex">
                 <Label className="mr-1">RoomCode:</Label>
                 <Input onChange={(e) => setRoomCode(e.target.value)}></Input>

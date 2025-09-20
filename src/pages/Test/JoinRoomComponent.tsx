@@ -3,13 +3,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState, type Dispatch } from "react";
 
-function JoinRoomComponent() {
+export default function JoinRoomComponent() {
     const [roomCode, setRoomCode] = useState<string>("");
     const [playerName, setPlayerName] = useState<string>("");
     const [message, setMessage] = useState<string>("");
 
     return (
         <div className="m-4 border-8">
+            <Label className="font-bold border-2 text-lg"> JOIN A ROOM: </Label>
             <Label>Room Code</Label>
             <Input onChange={(e) => setRoomCode(e.target.value)}></Input>
             <Label>PlayerName</Label>

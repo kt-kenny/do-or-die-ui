@@ -8,6 +8,7 @@ export default function CreateRoomComponent() {
     const [roomName, setRoomName] = useState<string>("");
     return (
         <div className="m-4 border-8">
+            <Label className="font-bold border-2 text-lg">CREATE A ROOM:</Label>
             <div className="flex">
                 <Label className="mr-1">RoomName:</Label>
                 <Input onChange={(e) => setRoomName(e.target.value)}></Input>
