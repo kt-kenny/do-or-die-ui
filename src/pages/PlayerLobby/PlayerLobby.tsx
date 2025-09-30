@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useParams, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function PlayerLobby() {
     const { roomCode } = useParams<{ roomCode: string }>();
@@ -12,6 +13,7 @@ export default function PlayerLobby() {
     const [doOrDieText, setDoOrDieText] = useState<string>("");
     const [websocket, setWebsocket] = useState<WebSocket | null>(null);
     const [isConnected, setIsConnected] = useState<boolean>(false);
+    const navigate = useNavigate();
 
     useEffect(() => {
         if (roomCode && playerName) {
@@ -22,8 +24,8 @@ export default function PlayerLobby() {
                     type: "JOIN",
                     message: {
                         roomId: roomCode,
-                        playerName: playerName
-                    }
+                        playerName: playerName,
+                    },
                 };
                 ws.send(JSON.stringify(joinMessage));
                 setIsConnected(true);
@@ -55,6 +57,8 @@ export default function PlayerLobby() {
                 ws.close();
                 setWebsocket(null);
             };
+        } else {
+            navigate("/");
         }
     }, [roomCode, playerName]);
 
@@ -65,8 +69,8 @@ export default function PlayerLobby() {
                 message: {
                     roomId: roomCode,
                     playerName: playerName,
-                    doOrDies: [doOrDieText.trim()]
-                }
+                    doOrDies: [doOrDieText.trim()],
+                },
             };
             websocket.send(JSON.stringify(addDoOrDieMessage));
             console.log("Sent ADD_DO_OR_DIE message:", addDoOrDieMessage);
@@ -81,30 +85,40 @@ export default function PlayerLobby() {
             <div className="max-w-md mx-auto space-y-6">
                 {/* Header */}
                 <div className="text-center pt-8">
-                    <h1 className="text-3xl font-bold text-white mb-2">Player Lobby</h1>
+                    <h1 className="text-3xl font-bold text-white mb-2">
+                        Player Lobby
+                    </h1>
                     <div className="bg-white rounded-lg p-4 shadow-lg">
                         <div className="text-center">
                             <p className="text-sm text-gray-600">Room Code</p>
-                            <p className="text-2xl font-bold text-gray-800">{roomCode}</p>
+                            <p className="text-2xl font-bold text-gray-800">
+                                {roomCode}
+                            </p>
                         </div>
                         <div className="mt-3 text-center">
                             <p className="text-sm text-gray-600">Player Name</p>
-                            <p className="text-lg font-semibold text-gray-800">{playerName}</p>
+                            <p className="text-lg font-semibold text-gray-800">
+                                {playerName}
+                            </p>
                         </div>
                     </div>
                 </div>
 
                 {/* Connection Status */}
                 <div className="text-center">
-                    <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                        isConnected
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-red-100 text-red-800'
-                    }`}>
-                        <div className={`w-2 h-2 rounded-full mr-2 ${
-                            isConnected ? 'bg-green-600' : 'bg-red-600'
-                        }`}></div>
-                        {isConnected ? 'Connected' : 'Disconnected'}
+                    <div
+                        className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                            isConnected
+                                ? "bg-green-100 text-green-800"
+                                : "bg-red-100 text-red-800"
+                        }`}
+                    >
+                        <div
+                            className={`w-2 h-2 rounded-full mr-2 ${
+                                isConnected ? "bg-green-600" : "bg-red-600"
+                            }`}
+                        ></div>
+                        {isConnected ? "Connected" : "Disconnected"}
                     </div>
                 </div>
 
@@ -120,7 +134,7 @@ export default function PlayerLobby() {
                             placeholder="Enter your do or die challenge..."
                             className="text-lg p-4 border-2 border-gray-300 focus:border-amber-500"
                             onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
+                                if (e.key === "Enter") {
                                     handleSubmitDoOrDie();
                                 }
                             }}
