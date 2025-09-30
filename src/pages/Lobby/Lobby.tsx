@@ -7,7 +7,7 @@ import type { GameRoom } from "./Model/GameRoom";
 export default function Lobby() {
     const { roomCode } = useParams<{ roomCode: string }>();
     const [gameRoom, setGameRoom] = useState<GameRoom | undefined>();
-
+    const [websocket, setWebsocket] = useState<WebSocket | null>(null);
     /**
      *  Without useEffect the hostRoom would be called on every state change. React components re-render whenever state changes or props change.
      *  The useEffect() pattern ensures one connection per roomCode
@@ -23,8 +23,10 @@ export default function Lobby() {
 
             // Set up WebSocket connection
             const ws = hostRoom(roomCode, setGameRoom);
+            setWebsocket(ws);
             return () => {
                 ws?.close();
+                setWebsocket(null);
             };
         }
     }, [roomCode]);
@@ -35,13 +37,29 @@ export default function Lobby() {
                 gameRoom={gameRoom}
                 roomCode={roomCode || ""}
             ></LobbyHead>
-            <ScrollList gameRoom={gameRoom}></ScrollList>
+            <ScrollList gameRoom={gameRoom} websocket={websocket} roomCode={roomCode}></ScrollList>
         </div>
     );
 }
 
-function ScrollList(props: Readonly<{ gameRoom?: GameRoom }>) {
+function ScrollList(props: Readonly<{ gameRoom?: GameRoom; websocket?: WebSocket | null; roomCode?: string }>) {
     const doOrDies = props.gameRoom ? props.gameRoom.doOrDies : [];
+
+    const handleReject = (doOrDieId: string) => {
+        if (props.websocket && props.roomCode) {
+            const rejectMessage = {
+                type: "REMOVE_DO_OR_DIE",
+                message: {
+                    roomId: props.roomCode,
+                    doOrDieId: doOrDieId
+                }
+            };
+            props.websocket.send(JSON.stringify(rejectMessage));
+            console.log("Sent reject message:", rejectMessage);
+        } else {
+            console.error("WebSocket not available or roomCode missing");
+        }
+    };
 
     return (
         <div className="flex-col max-h-1/4 min-w-200 max-w-9/10 overflow-y-auto p-4 rounded-lg mx-auto bg-amber-800">
@@ -55,7 +73,10 @@ function ScrollList(props: Readonly<{ gameRoom?: GameRoom }>) {
                     <span className="text-gray-800 font-medium">
                         {doOrDie.question}
                     </span>
-                    <Button className="ml-4 bg-red-600 hover:bg-red-700 text-white">
+                    <Button
+                        className="ml-4 bg-red-600 hover:bg-red-700 text-white"
+                        onClick={() => handleReject(doOrDie.id)}
+                    >
                         Reject
                     </Button>
                 </div>
