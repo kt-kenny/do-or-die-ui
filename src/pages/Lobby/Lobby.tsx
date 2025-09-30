@@ -52,8 +52,12 @@ function ScrollList(props: Readonly<{ gameRoom?: GameRoom }>) {
                     key={doOrDie.id}
                     className="flex items-center justify-between mb-3 p-3 bg-white rounded-lg shadow-md border border-gray-200"
                 >
-                    <span className="text-gray-800 font-medium">{doOrDie.question}</span>
-                    <Button className="ml-4">Reject</Button>
+                    <span className="text-gray-800 font-medium">
+                        {doOrDie.question}
+                    </span>
+                    <Button className="ml-4 bg-red-600 hover:bg-red-700 text-white">
+                        Reject
+                    </Button>
                 </div>
             ))}
         </div>
@@ -88,7 +92,10 @@ function LobbyHead(props: Readonly<{ gameRoom?: GameRoom; roomCode: string }>) {
             </div>
 
             {/* Start Game Button */}
-            <Button onClick={() => console.log("STARTING GAME")}>
+            <Button
+                onClick={() => console.log("STARTING GAME")}
+                className="bg-green-600 hover:bg-green-700 text-white"
+            >
                 Start Game?
             </Button>
         </div>

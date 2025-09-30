@@ -9,19 +9,22 @@ export default function CreateRoomComponent() {
     const [roomName, setRoomName] = useState<string>("");
     const navigate = useNavigate();
     return (
-        <div className="m-4 border-8">
-            <Label className="font-bold border-2 text-lg">CREATE A ROOM:</Label>
-            <div className="flex">
-                <Label className="mr-1">RoomName:</Label>
-                <Input onChange={(e) => setRoomName(e.target.value)}></Input>
-            </div>
+        <div className="p-4 rounded-lg bg-amber-800 m-5 shadow-md">
+            <Label className="text-2xl font-bold text-white mb-4 block">CREATE A ROOM:</Label>
+            <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-1">
+                    <Label className="text-xl font-bold text-white">Room Name:</Label>
+                    <Input onChange={(e) => setRoomName(e.target.value)} className="bg-white"></Input>
+                </div>
 
-            <div className="flex">
-                <Button
-                    onClick={() => createRoom(roomName, navigate)}
-                >
-                    Create Game Room
-                </Button>
+                <div className="flex justify-center mt-4">
+                    <Button
+                        onClick={() => createRoom(roomName, navigate)}
+                        className="px-6 py-2 bg-orange-600 hover:bg-orange-700 text-white"
+                    >
+                        Create Game Room
+                    </Button>
+                </div>
             </div>
         </div>
     );
