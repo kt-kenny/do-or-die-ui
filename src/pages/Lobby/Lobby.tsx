@@ -32,12 +32,18 @@ export default function Lobby() {
     }, [roomCode]);
 
     return (
-        <div className="min-h-screen flex flex-col items-center justify-center max-w-[50%] mx-auto">
-            <LobbyHead
-                gameRoom={gameRoom}
-                roomCode={roomCode || ""}
-            ></LobbyHead>
-            <ScrollList gameRoom={gameRoom} websocket={websocket} roomCode={roomCode}></ScrollList>
+        <div className="min-h-screen bg-gradient-to-b from-amber-600 to-amber-800 p-4">
+            <div className="max-w-md mx-auto space-y-6">
+                <div className="text-center pt-8">
+                    <h1 className="text-3xl font-bold text-white mb-2">Game Lobby</h1>
+                    <p className="text-white/80">Host Dashboard</p>
+                </div>
+                <LobbyHead
+                    gameRoom={gameRoom}
+                    roomCode={roomCode || ""}
+                />
+                <ScrollList gameRoom={gameRoom} websocket={websocket} roomCode={roomCode} />
+            </div>
         </div>
     );
 }
@@ -62,25 +68,38 @@ function ScrollList(props: Readonly<{ gameRoom?: GameRoom; websocket?: WebSocket
     };
 
     return (
-        <div className="flex-col max-h-1/4 min-w-200 max-w-9/10 overflow-y-auto p-4 rounded-lg mx-auto bg-amber-800">
-            <h1 className="text-2xl font-bold text-white mb-2">DoOrDies:</h1>
-            <h1>{doOrDies.length}</h1>
-            {doOrDies.map((doOrDie) => (
-                <div
-                    key={doOrDie.id}
-                    className="flex items-center justify-between mb-3 p-3 bg-white rounded-lg shadow-md border border-gray-200"
-                >
-                    <span className="text-gray-800 font-medium">
-                        {doOrDie.question}
-                    </span>
-                    <Button
-                        className="ml-4 bg-red-600 hover:bg-red-700 text-white"
-                        onClick={() => handleReject(doOrDie.id)}
-                    >
-                        Reject
-                    </Button>
-                </div>
-            ))}
+        <div className="bg-white rounded-lg p-6 shadow-lg">
+            <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-bold text-gray-800">Do or Dies</h2>
+                <span className="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-sm font-medium">
+                    {doOrDies.length} challenges
+                </span>
+            </div>
+            <div className="space-y-3 max-h-64 overflow-y-auto">
+                {doOrDies.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500">
+                        <p>No challenges yet...</p>
+                        <p className="text-sm">Players can submit do or die challenges</p>
+                    </div>
+                ) : (
+                    doOrDies.map((doOrDie) => (
+                        <div
+                            key={doOrDie.id}
+                            className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200"
+                        >
+                            <span className="text-gray-800 font-medium flex-1 mr-3">
+                                {doOrDie.question}
+                            </span>
+                            <Button
+                                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2"
+                                onClick={() => handleReject(doOrDie.id)}
+                            >
+                                Reject
+                            </Button>
+                        </div>
+                    ))
+                )}
+            </div>
         </div>
     );
 }
@@ -90,34 +109,49 @@ function LobbyHead(props: Readonly<{ gameRoom?: GameRoom; roomCode: string }>) {
         ? Object.values(props.gameRoom.players).map((player) => player.name)
         : [];
     const displayRoomCode = props.gameRoom?.roomCode || props.roomCode;
+
     return (
-        <div className="flex items-center justify-between max-h-1/4 min-w-200 max-w-9/10 overflow-y-auto  p-4 rounded-lg mx-auto bg-amber-800 m-5">
-            {/* Room Code */}
-            <div className="flex flex-col items-start">
-                <p className="text-xl font-bold text-white">Room Code</p>
-                <p className="text-lg font-bold text-gray-900">
+        <div className="bg-white rounded-lg p-6 shadow-lg">
+            {/* Room Info */}
+            <div className="text-center mb-6">
+                <p className="text-sm text-gray-600">Room Code</p>
+                <p className="text-3xl font-bold text-gray-800 tracking-wider">
                     {displayRoomCode}
                 </p>
             </div>
 
-            {/* Players */}
-            <div className="flex items-start gap-4">
-                <p className="text-xl font-bold text-white">Players:</p>
-                <div className="flex flex-col gap-1">
-                    {players.map((playerName, index) => (
-                        <p key={index} className="text-gray-900">
-                            {playerName}
+            {/* Players Section */}
+            <div className="mb-6">
+                <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-lg font-semibold text-gray-800">Players</h3>
+                    <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm font-medium">
+                        {players.length} joined
+                    </span>
+                </div>
+
+                <div className="space-y-2 max-h-32 overflow-y-auto">
+                    {players.length === 0 ? (
+                        <p className="text-gray-500 text-center py-4">
+                            Waiting for players to join...
                         </p>
-                    ))}
+                    ) : (
+                        players.map((playerName, index) => (
+                            <div key={index} className="flex items-center p-2 bg-gray-50 rounded-lg">
+                                <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
+                                <span className="text-gray-800 font-medium">{playerName}</span>
+                            </div>
+                        ))
+                    )}
                 </div>
             </div>
 
             {/* Start Game Button */}
             <Button
                 onClick={() => console.log("STARTING GAME")}
-                className="bg-green-600 hover:bg-green-700 text-white"
+                disabled={players.length === 0}
+                className="w-full text-lg py-4 bg-green-600 hover:bg-green-700 text-white disabled:bg-gray-400"
             >
-                Start Game?
+                {players.length === 0 ? "Waiting for Players" : "Start Game"}
             </Button>
         </div>
     );

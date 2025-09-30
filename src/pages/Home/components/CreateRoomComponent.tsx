@@ -9,22 +9,26 @@ export default function CreateRoomComponent() {
     const [roomName, setRoomName] = useState<string>("");
     const navigate = useNavigate();
     return (
-        <div className="p-4 rounded-lg bg-amber-800 m-5 shadow-md">
-            <Label className="text-2xl font-bold text-white mb-4 block">CREATE A ROOM:</Label>
-            <div className="flex flex-col gap-3">
-                <div className="flex flex-col gap-1">
-                    <Label className="text-xl font-bold text-white">Room Name:</Label>
-                    <Input onChange={(e) => setRoomName(e.target.value)} className="bg-white"></Input>
+        <div className="bg-white rounded-lg p-6 shadow-lg">
+            <Label className="text-2xl font-bold text-gray-800 mb-4 block text-center">
+                Create a Room
+            </Label>
+            <div className="space-y-4">
+                <div className="space-y-2">
+                    <Label className="text-lg font-semibold text-gray-700">Room Name</Label>
+                    <Input
+                        onChange={(e) => setRoomName(e.target.value)}
+                        placeholder="Enter room name..."
+                        className="text-lg p-4 border-2 border-gray-300 focus:border-amber-500"
+                    />
                 </div>
-
-                <div className="flex justify-center mt-4">
-                    <Button
-                        onClick={() => createRoom(roomName, navigate)}
-                        className="px-6 py-2 bg-orange-600 hover:bg-orange-700 text-white"
-                    >
-                        Create Game Room
-                    </Button>
-                </div>
+                <Button
+                    onClick={() => createRoom(roomName, navigate)}
+                    disabled={!roomName.trim()}
+                    className="w-full text-lg py-4 bg-orange-600 hover:bg-orange-700 text-white disabled:bg-gray-400"
+                >
+                    Create Game Room
+                </Button>
             </div>
         </div>
     );

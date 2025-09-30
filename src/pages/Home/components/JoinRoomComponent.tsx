@@ -1,58 +1,58 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useState, type Dispatch } from "react";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function JoinRoomComponent() {
     const [roomCode, setRoomCode] = useState<string>("");
     const [playerName, setPlayerName] = useState<string>("");
-    const [message, setMessage] = useState<string>("");
+    const navigate = useNavigate();
 
     return (
-        <div className="p-4 rounded-lg bg-amber-800 m-5 shadow-md">
-            <Label className="text-2xl font-bold text-white mb-4 block">JOIN A ROOM:</Label>
-            <div className="flex flex-col gap-3">
-                <div className="flex flex-col gap-1">
-                    <Label className="text-xl font-bold text-white">Room Code:</Label>
-                    <Input onChange={(e) => setRoomCode(e.target.value)} className="bg-white"></Input>
+        <div className="bg-white rounded-lg p-6 shadow-lg">
+            <Label className="text-2xl font-bold text-gray-800 mb-4 block text-center">
+                Join a Room
+            </Label>
+            <div className="space-y-4">
+                <div className="space-y-2">
+                    <Label className="text-lg font-semibold text-gray-700">Room Code</Label>
+                    <Input
+                        onChange={(e) => setRoomCode(e.target.value)}
+                        placeholder="Enter room code..."
+                        className="text-lg p-4 border-2 border-gray-300 focus:border-amber-500"
+                    />
                 </div>
-                <div className="flex flex-col gap-1">
-                    <Label className="text-xl font-bold text-white">Player Name:</Label>
-                    <Input onChange={(e) => setPlayerName(e.target.value)} className="bg-white"></Input>
+                <div className="space-y-2">
+                    <Label className="text-lg font-semibold text-gray-700">Player Name</Label>
+                    <Input
+                        onChange={(e) => setPlayerName(e.target.value)}
+                        placeholder="Enter your name..."
+                        className="text-lg p-4 border-2 border-gray-300 focus:border-amber-500"
+                    />
                 </div>
-                <div className="flex justify-center mt-4">
-                    <Button onClick={() => joinRoom(roomCode, playerName, setMessage)} className="px-6 py-2 bg-orange-600 hover:bg-orange-700 text-white">
-                        Join Game Room
-                    </Button>
-                </div>
-                {message && (
-                    <div className="p-3 bg-white rounded-lg mt-3">
-                        <Label className="text-gray-800 font-medium">Current Message:</Label>
-                        <p className="text-gray-800">{message}</p>
-                    </div>
-                )}
+                <Button
+                    onClick={() => joinRoom(roomCode, playerName, navigate)}
+                    disabled={!roomCode.trim() || !playerName.trim()}
+                    className="w-full text-lg py-4 bg-orange-600 hover:bg-orange-700 text-white disabled:bg-gray-400"
+                >
+                    Join Game Room
+                </Button>
             </div>
         </div>
     );
 }
 
-async function joinRoom(
+function joinRoom(
     roomCode: string,
     playerName: string,
-    setMessage: Dispatch<string>
+    navigate: (path: string, options?: { state?: any }) => void
 ) {
-    let connection = new WebSocket("ws://localhost:8080/ws/game");
-    let payload = {
-        type: "JOIN",
-        message: { roomId: roomCode, playerName: playerName },
-    };
-
-    connection.onopen = () => {
-        connection.send(JSON.stringify(payload));
-    };
-
-    connection.onmessage = (event) => {
-        setMessage(JSON.stringify(event.data));
-        console.log(event.data);
-    };
+    if (roomCode.trim() && playerName.trim()) {
+        navigate(`/player-lobby/${roomCode}`, {
+            state: { playerName }
+        });
+    } else {
+        console.error("Room code and player name are required");
+    }
 }
