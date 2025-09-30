@@ -82,15 +82,15 @@ export default function BoardGame() {
     if (index <= 7) {
       // Top row: 0-7 (left to right)
       return { row: 0, col: index };
-    } else if (index <= 14) {
-      // Right side: 8-14 (top to bottom)
+    } else if (index <= 13) {
+      // Right side: 8-13 (top to bottom, excluding top-right corner)
       return { row: index - 7, col: 7 };
-    } else if (index <= 21) {
-      // Bottom row: 15-21 (right to left)
-      return { row: 7, col: 7 - (index - 15) };
+    } else if (index <= 20) {
+      // Bottom row: 14-20 (right to left, including bottom-right corner)
+      return { row: 7, col: 7 - (index - 14) };
     } else {
-      // Left side: 22-29 (bottom to top)
-      return { row: 7 - (index - 22), col: 0 };
+      // Left side: 21-29 (bottom to top, excluding bottom-left corner)
+      return { row: 7 - (index - 21), col: 0 };
     }
   };
 
@@ -122,7 +122,7 @@ export default function BoardGame() {
               }
 
               const playersOnTile = getPlayersOnTile(tileIndex);
-              const isCorner = tileIndex === 0 || tileIndex === 7 || tileIndex === 15 || tileIndex === 22;
+              const isCorner = tileIndex === 0 || tileIndex === 7 || tileIndex === 14 || tileIndex === 21;
 
               return (
                 <div

@@ -1,13 +1,15 @@
-import "./pages/Home/Home";
-import Test from "./pages/Test/Test";
-import BoardGame from "./pages/Board/BoardGame";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import Home from "./pages/Home/Home";
+import Lobby from "./pages/Lobby/Lobby";
 
 function App() {
     return (
-        <>
-            <BoardGame />
-            <Test></Test>
-        </>
+        <Router>
+            <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/lobby/:roomCode" element={<Lobby />} />
+            </Routes>
+        </Router>
     );
 }
 

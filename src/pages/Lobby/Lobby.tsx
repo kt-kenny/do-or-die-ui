@@ -1,107 +1,138 @@
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
+import { useParams } from "react-router-dom";
+import { useState, useEffect } from "react";
+import axios from "axios";
+import type { GameRoom } from "./Model/GameRoom";
 
 export default function Lobby() {
-  return (
-    <>
-      <LobbyHead
-        roomCode="qwetty"
-        players={["kenny", "dante", "brad pittonses","kenny", "dante", "brad pittonses","kenny", "dante", "brad pittonses","kenny", "dante", "brad pittonses"]}
-      ></LobbyHead>
-      <ScrollList></ScrollList>
-    </>
-  );
-}
+    const { roomCode } = useParams<{ roomCode: string }>();
+    const [gameRoom, setGameRoom] = useState<GameRoom | undefined>();
 
-// interface GameState {
-//   roomCode: string;
-//   players: Player[];
-//   dares: Dare[];
-//   tiles: TileType[];
-//   currentPlayer: string;
-//   phase: string;
-// }
+    /**
+     *  Without useEffect the hostRoom would be called on every state change. React components re-render whenever state changes or props change.
+     *  The useEffect() pattern ensures one connection per roomCode
+     */
+    useEffect(() => {
+        if (roomCode) {
+            // Fetch initial game state
+            getGameState(roomCode)
+                .then(setGameRoom)
+                .catch((error) =>
+                    console.error("Failed to fetch initial game state:", error)
+                );
 
-// interface Player {
-//   name: string;
-//   currentTile: number;
-// }
-// interface Dare {
-//   id: UUID;
-//   desc: string;
-// }
+            // Set up WebSocket connection
+            const ws = hostRoom(roomCode, setGameRoom);
+            return () => {
+                ws?.close();
+            };
+        }
+    }, [roomCode]);
 
-// const TileType = {
-//   DIE: "DIE",
-//   DO_OR_DIE: "DO_OR_DIE",
-//   END: "END",
-//   MOVE_X_SPACES: "MOVE_X_SPACES",
-//   EMPTY: "EMPTY",
-// };
-// type TileType = (typeof TileType)[keyof typeof TileType];
-
-// type UUID = string;
-
-// const gamestate: GameState = {
-//   roomCode: "qwetty2",
-//   players: [],
-//   dares: [
-//     { id: "id1", desc: "dare1" },
-//     { id: "id2", desc: "dare2" },
-//     { id: "id3", desc: "dare3" },
-//   ],
-//   tiles: [],
-//   currentPlayer: "",
-//   phase: "",
-// };
-
-function ScrollList() {
-  const items = [
-    "Dare someone to dance",
-    "Sing a song",
-    "Do 10 pushups",
-    "Act like a cat",
-    "Say the alphabet backwards",
-    "Tell an embarrassing story",
-    "Do a handstand (or try)",
-  ];
-
-  return (
-    <div className="flex-col max-h-1/4 min-w-200 max-w-9/10 overflow-y-auto p-4 rounded-lg mx-auto bg-amber-800">
-      {items.map((text, index) => (
-        <div key={index} className="flex items-center mb-3 border-gray-300">
-          <span>{text}</span>
-          <Button>Reject</Button>
+    return (
+        <div className="min-h-screen flex flex-col items-center justify-center max-w-[50%] mx-auto">
+            <LobbyHead
+                gameRoom={gameRoom}
+                roomCode={roomCode || ""}
+            ></LobbyHead>
+            <ScrollList gameRoom={gameRoom}></ScrollList>
         </div>
-      ))}
-    </div>
-  );
+    );
 }
 
-function LobbyHead(props: { roomCode: string; players: string[] }) {
-  return (
-<div className="flex items-center justify-between max-h-1/4 min-w-200 max-w-9/10 overflow-y-auto  p-4 rounded-lg mx-auto bg-amber-800 m-5">
-  {/* Room Code */}
-  <div className="flex flex-col items-start">
-    <p className="text-sm font-semibold text-gray-700">Room Code</p>
-    <p className="text-lg font-bold text-gray-900">{props.roomCode}</p>
-  </div>
+function ScrollList(props: Readonly<{ gameRoom?: GameRoom }>) {
+    const doOrDies = props.gameRoom ? props.gameRoom.doOrDies : [];
 
-  {/* Players */}
-  <div className="flex items-start gap-4">
-    <p className="text-sm font-semibold text-gray-700">Players:</p>
-    <div className="flex flex-col gap-1">
-      {props.players.map((playerName) => (
-        <p key={playerName} className="text-gray-900">
-          {playerName}
-        </p>
-      ))}
-    </div>
-  </div>
+    return (
+        <div className="flex-col max-h-1/4 min-w-200 max-w-9/10 overflow-y-auto p-4 rounded-lg mx-auto bg-amber-800">
+            <h1 className="text-2xl font-bold text-white mb-2">DoOrDies:</h1>
+            <h1>{doOrDies.length}</h1>
+            {doOrDies.map((doOrDie) => (
+                <div
+                    key={doOrDie.id}
+                    className="flex items-center justify-between mb-3 p-3 bg-white rounded-lg shadow-md border border-gray-200"
+                >
+                    <span className="text-gray-800 font-medium">{doOrDie.question}</span>
+                    <Button className="ml-4">Reject</Button>
+                </div>
+            ))}
+        </div>
+    );
+}
 
-  {/* Start Game Button */}
-  <Button onClick={()=> console.log("STARTING GAME")}>
-    Start Game?
-  </Button>
-</div>
-  );
+function LobbyHead(props: Readonly<{ gameRoom?: GameRoom; roomCode: string }>) {
+    const players = props.gameRoom
+        ? Object.values(props.gameRoom.players).map((player) => player.name)
+        : [];
+    const displayRoomCode = props.gameRoom?.roomCode || props.roomCode;
+    return (
+        <div className="flex items-center justify-between max-h-1/4 min-w-200 max-w-9/10 overflow-y-auto  p-4 rounded-lg mx-auto bg-amber-800 m-5">
+            {/* Room Code */}
+            <div className="flex flex-col items-start">
+                <p className="text-xl font-bold text-white">Room Code</p>
+                <p className="text-lg font-bold text-gray-900">
+                    {displayRoomCode}
+                </p>
+            </div>
+
+            {/* Players */}
+            <div className="flex items-start gap-4">
+                <p className="text-xl font-bold text-white">Players:</p>
+                <div className="flex flex-col gap-1">
+                    {players.map((playerName, index) => (
+                        <p key={index} className="text-gray-900">
+                            {playerName}
+                        </p>
+                    ))}
+                </div>
+            </div>
+
+            {/* Start Game Button */}
+            <Button onClick={() => console.log("STARTING GAME")}>
+                Start Game?
+            </Button>
+        </div>
+    );
+}
+async function getGameState(roomCode: string): Promise<GameRoom> {
+    const endpoint =
+        import.meta.env.VITE_API_URL + `/rooms/${encodeURIComponent(roomCode)}`;
+    const response = await axios.get(endpoint);
+    return response.data as GameRoom;
+}
+function hostRoom(
+    roomCode: string,
+    setGameRoom: (gameRoom: GameRoom) => void
+): WebSocket {
+    const hostConnection = new WebSocket("ws://localhost:8080/ws/game");
+    const hostJoinMessage = {
+        type: "HOST_JOIN",
+        message: { roomId: roomCode },
+    };
+
+    hostConnection.onopen = () => {
+        hostConnection.send(JSON.stringify(hostJoinMessage));
+    };
+
+    hostConnection.onmessage = (event) => {
+        try {
+            const data = JSON.parse(event.data);
+            console.log("WebSocket message received:", data);
+
+            // Parse the message as GameRoom and update state
+            setGameRoom(data.events[0].gameRoom as GameRoom); // TODO: make a lobby message wrapper
+        } catch (error) {
+            console.error("Failed to parse WebSocket message:", error);
+        }
+    };
+
+    hostConnection.onerror = (error) => {
+        console.error("WebSocket error:", error);
+    };
+
+    hostConnection.onclose = () => {
+        console.log("WebSocket connection closed");
+    };
+
+    return hostConnection;
 }

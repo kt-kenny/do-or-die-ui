@@ -1,10 +1,9 @@
 import HostRoomComponent from "./HostRoomComponent";
-import JoinRoomComponent from "./JoinRoomComponent";
+import JoinRoomComponent from "../Home/components/JoinRoomComponent";
 import GetGameStateComponent from "./GetGameStateComponent";
-import CreateRoomComponent from "./CreateRoomComponent";
+import CreateRoomComponent from "../Home/components/CreateRoomComponent";
 
 export default function Test() {
-
     return (
         <div>
             <CreateRoomComponent></CreateRoomComponent>
