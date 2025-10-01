@@ -5,31 +5,31 @@ import axios from "axios";
 import type { GameRoom } from "./Model/GameRoom";
 
 export default function Lobby() {
-    const { roomCode } = useParams<{ roomCode: string }>();
+    const { roomId } = useParams<{ roomId: string }>();
     const [gameRoom, setGameRoom] = useState<GameRoom | undefined>();
     const [websocket, setWebsocket] = useState<WebSocket | null>(null);
     /**
      *  Without useEffect the hostRoom would be called on every state change. React components re-render whenever state changes or props change.
-     *  The useEffect() pattern ensures one connection per roomCode
+     *  The useEffect() pattern ensures one connection per roomId
      */
     useEffect(() => {
-        if (roomCode) {
+        if (roomId) {
             // Fetch initial game state
-            getGameState(roomCode)
+            getGameState(roomId)
                 .then(setGameRoom)
                 .catch((error) =>
                     console.error("Failed to fetch initial game state:", error)
                 );
 
             // Set up WebSocket connection
-            const ws = hostRoom(roomCode, setGameRoom);
+            const ws = hostRoom(roomId, setGameRoom);
             setWebsocket(ws);
             return () => {
                 ws?.close();
                 setWebsocket(null);
             };
         }
-    }, [roomCode]);
+    }, [roomId]);
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-amber-600 to-amber-800 p-4">
@@ -40,30 +40,30 @@ export default function Lobby() {
                 </div>
                 <LobbyHead
                     gameRoom={gameRoom}
-                    roomCode={roomCode || ""}
+                    roomId={roomId || ""}
                 />
-                <ScrollList gameRoom={gameRoom} websocket={websocket} roomCode={roomCode} />
+                <ScrollList gameRoom={gameRoom} websocket={websocket} roomId={roomId} />
             </div>
         </div>
     );
 }
 
-function ScrollList(props: Readonly<{ gameRoom?: GameRoom; websocket?: WebSocket | null; roomCode?: string }>) {
+function ScrollList(props: Readonly<{ gameRoom?: GameRoom; websocket?: WebSocket | null; roomId?: string }>) {
     const doOrDies = props.gameRoom ? props.gameRoom.doOrDies : [];
 
     const handleReject = (doOrDieId: string) => {
-        if (props.websocket && props.roomCode) {
+        if (props.websocket && props.roomId) {
             const rejectMessage = {
                 type: "REMOVE_DO_OR_DIE",
                 message: {
-                    roomId: props.roomCode,
+                    roomId: props.roomId,
                     doOrDieId: doOrDieId
                 }
             };
             props.websocket.send(JSON.stringify(rejectMessage));
             console.log("Sent reject message:", rejectMessage);
         } else {
-            console.error("WebSocket not available or roomCode missing");
+            console.error("WebSocket not available or roomId missing");
         }
     };
 
@@ -104,19 +104,19 @@ function ScrollList(props: Readonly<{ gameRoom?: GameRoom; websocket?: WebSocket
     );
 }
 
-function LobbyHead(props: Readonly<{ gameRoom?: GameRoom; roomCode: string }>) {
+function LobbyHead(props: Readonly<{ gameRoom?: GameRoom; roomId: string }>) {
     const players = props.gameRoom
         ? Object.values(props.gameRoom.players).map((player) => player.name)
         : [];
-    const displayRoomCode = props.gameRoom?.roomCode || props.roomCode;
+    const displayRoomId = props.gameRoom?.roomId || props.roomId;
 
     return (
         <div className="bg-white rounded-lg p-6 shadow-lg">
             {/* Room Info */}
             <div className="text-center mb-6">
-                <p className="text-sm text-gray-600">Room Code</p>
+                <p className="text-sm text-gray-600">Room ID</p>
                 <p className="text-3xl font-bold text-gray-800 tracking-wider">
-                    {displayRoomCode}
+                    {displayRoomId}
                 </p>
             </div>
 
@@ -156,20 +156,20 @@ function LobbyHead(props: Readonly<{ gameRoom?: GameRoom; roomCode: string }>) {
         </div>
     );
 }
-async function getGameState(roomCode: string): Promise<GameRoom> {
+async function getGameState(roomId: string): Promise<GameRoom> {
     const endpoint =
-        import.meta.env.VITE_API_URL + `/rooms/${encodeURIComponent(roomCode)}`;
+        import.meta.env.VITE_API_URL + `/rooms/${encodeURIComponent(roomId)}`;
     const response = await axios.get(endpoint);
     return response.data as GameRoom;
 }
 function hostRoom(
-    roomCode: string,
+    roomId: string,
     setGameRoom: (gameRoom: GameRoom) => void
 ): WebSocket {
     const hostConnection = new WebSocket("ws://localhost:8080/ws/game");
     const hostJoinMessage = {
         type: "HOST_JOIN",
-        message: { roomId: roomCode },
+        message: { roomId: roomId },
     };
 
     hostConnection.onopen = () => {

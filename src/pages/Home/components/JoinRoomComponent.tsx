@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 export default function JoinRoomComponent() {
-    const [roomCode, setRoomCode] = useState<string>("");
+    const [roomId, setRoomId] = useState<string>("");
     const [playerName, setPlayerName] = useState<string>("");
     const navigate = useNavigate();
 
@@ -16,10 +16,10 @@ export default function JoinRoomComponent() {
             </Label>
             <div className="space-y-4">
                 <div className="space-y-2">
-                    <Label className="text-lg font-semibold text-gray-700">Room Code</Label>
+                    <Label className="text-lg font-semibold text-gray-700">Room ID</Label>
                     <Input
-                        onChange={(e) => setRoomCode(e.target.value)}
-                        placeholder="Enter room code..."
+                        onChange={(e) => setRoomId(e.target.value)}
+                        placeholder="Enter room ID..."
                         className="text-lg p-4 border-2 border-gray-300 focus:border-amber-500"
                     />
                 </div>
@@ -32,8 +32,8 @@ export default function JoinRoomComponent() {
                     />
                 </div>
                 <Button
-                    onClick={() => joinRoom(roomCode, playerName, navigate)}
-                    disabled={!roomCode.trim() || !playerName.trim()}
+                    onClick={() => joinRoom(roomId, playerName, navigate)}
+                    disabled={!roomId.trim() || !playerName.trim()}
                     className="w-full text-lg py-4 bg-orange-600 hover:bg-orange-700 text-white disabled:bg-gray-400"
                 >
                     Join Game Room
@@ -44,15 +44,15 @@ export default function JoinRoomComponent() {
 }
 
 function joinRoom(
-    roomCode: string,
+    roomId: string,
     playerName: string,
     navigate: (path: string, options?: { state?: any }) => void
 ) {
-    if (roomCode.trim() && playerName.trim()) {
-        navigate(`/player-lobby/${roomCode}`, {
+    if (roomId.trim() && playerName.trim()) {
+        navigate(`/player-lobby/${roomId}`, {
             state: { playerName }
         });
     } else {
-        console.error("Room code and player name are required");
+        console.error("Room ID and player name are required");
     }
 }

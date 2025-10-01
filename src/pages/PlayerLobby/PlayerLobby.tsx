@@ -6,7 +6,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 export default function PlayerLobby() {
-    const { roomCode } = useParams<{ roomCode: string }>();
+    const { roomId } = useParams<{ roomId: string }>();
     const location = useLocation();
     const playerName = location.state?.playerName as string;
 
@@ -16,14 +16,14 @@ export default function PlayerLobby() {
     const navigate = useNavigate();
 
     useEffect(() => {
-        if (roomCode && playerName) {
+        if (roomId && playerName) {
             const ws = new WebSocket("ws://localhost:8080/ws/game");
 
             ws.onopen = () => {
                 const joinMessage = {
                     type: "JOIN",
                     message: {
-                        roomId: roomCode,
+                        roomId: roomId,
                         playerName: playerName,
                     },
                 };
@@ -60,14 +60,14 @@ export default function PlayerLobby() {
         } else {
             navigate("/");
         }
-    }, [roomCode, playerName]);
+    }, [roomId, playerName]);
 
     const handleSubmitDoOrDie = () => {
-        if (websocket && doOrDieText.trim() && roomCode && playerName) {
+        if (websocket && doOrDieText.trim() && roomId && playerName) {
             const addDoOrDieMessage = {
                 type: "ADD_DO_OR_DIE",
                 message: {
-                    roomId: roomCode,
+                    roomId: roomId,
                     playerName: playerName,
                     doOrDies: [doOrDieText.trim()],
                 },
@@ -90,9 +90,9 @@ export default function PlayerLobby() {
                     </h1>
                     <div className="bg-white rounded-lg p-4 shadow-lg">
                         <div className="text-center">
-                            <p className="text-sm text-gray-600">Room Code</p>
+                            <p className="text-sm text-gray-600">Room ID</p>
                             <p className="text-2xl font-bold text-gray-800">
-                                {roomCode}
+                                {roomId}
                             </p>
                         </div>
                         <div className="mt-3 text-center">

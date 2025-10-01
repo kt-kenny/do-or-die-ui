@@ -15,7 +15,9 @@ export default function CreateRoomComponent() {
             </Label>
             <div className="space-y-4">
                 <div className="space-y-2">
-                    <Label className="text-lg font-semibold text-gray-700">Room Name</Label>
+                    <Label className="text-lg font-semibold text-gray-700">
+                        Room Name
+                    </Label>
                     <Input
                         onChange={(e) => setRoomName(e.target.value)}
                         placeholder="Enter room name..."
@@ -43,6 +45,6 @@ async function createRoom(
         `/rooms?roomName=${encodeURIComponent(roomName)}&gameBoardSize=25`;
     const response = await axios.post(endpoint);
     let gameRoom = response.data as GameRoom;
-
-    navigate(`/lobby/${gameRoom.roomCode}`);
+    console.log(gameRoom.roomId + " SADSDASDSADSADSADSAD");
+    navigate(`/lobby/${gameRoom.roomId}`);
 }

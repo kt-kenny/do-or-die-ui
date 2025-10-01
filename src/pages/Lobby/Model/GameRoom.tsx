@@ -1,7 +1,7 @@
 import type { Player } from "./Player";
 
 export type GameRoom = {
-    roomCode: string;
+    roomId: string;
     roomName: string;
     players: Record<string, Player>;
     playerOrder: string[];

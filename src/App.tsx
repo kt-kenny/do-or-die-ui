@@ -8,8 +8,8 @@ function App() {
         <Router>
             <Routes>
                 <Route path="/" element={<Home />} />
-                <Route path="/lobby/:roomCode" element={<Lobby />} />
-                <Route path="/player-lobby/:roomCode" element={<PlayerLobby />} />
+                <Route path="/lobby/:roomId" element={<Lobby />} />
+                <Route path="/player-lobby/:roomId" element={<PlayerLobby />} />
             </Routes>
         </Router>
     );
