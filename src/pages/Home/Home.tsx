@@ -1,17 +1,17 @@
-import JoinRoomComponent from "./components/JoinRoom";
-import NewRoomComponent from "./components/NewRoom";
+import CreateRoomComponent from "./components/CreateRoomComponent";
+import JoinRoomComponent from "./components/JoinRoomComponent";
 
 export default function Home() {
-  return (
-    <div className="max-h-1/4 min-w-200 max-w-9/10 overflow-y-auto  p-4 rounded-lg mx-auto bg-amber-800 m-5 text-center">
-        <h1>DO OR DIE!</h1>
-        <br></br>
-        <NewRoomComponent></NewRoomComponent>
-        <br></br>
-        <JoinRoomComponent></JoinRoomComponent>
-        <div className="flex min-h-svh flex-col items-center justify-center">
-    </div>
-    </div>
-  );
+    return (
+        <div className="min-h-screen bg-gradient-to-b from-amber-600 to-amber-800 p-4">
+            <div className="max-w-md mx-auto space-y-6">
+                <div className="text-center pt-8 mb-8">
+                    <h1 className="text-4xl font-bold text-white mb-2">Do or Die</h1>
+                    <p className="text-white/80 text-lg">Create or join a game room</p>
+                </div>
+                <CreateRoomComponent />
+                <JoinRoomComponent />
+            </div>
+        </div>
+    );
 }
-
