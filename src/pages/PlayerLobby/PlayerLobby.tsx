@@ -17,19 +17,10 @@ export default function PlayerLobby() {
 
     useEffect(() => {
         if (roomId && playerName) {
-            const ws = new WebSocket("ws://localhost:8080/ws/game");
+            const ws = new WebSocket("ws://localhost:8080/ws/player");
 
             ws.onopen = () => {
-                const joinMessage = {
-                    type: "JOIN",
-                    message: {
-                        roomId: roomId,
-                        playerName: playerName,
-                    },
-                };
-                ws.send(JSON.stringify(joinMessage));
                 setIsConnected(true);
-                console.log("Sent JOIN message:", joinMessage);
             };
 
             ws.onmessage = (event) => {

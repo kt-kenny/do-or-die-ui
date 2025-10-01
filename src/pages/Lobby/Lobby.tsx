@@ -35,20 +35,29 @@ export default function Lobby() {
         <div className="min-h-screen bg-gradient-to-b from-amber-600 to-amber-800 p-4">
             <div className="max-w-md mx-auto space-y-6">
                 <div className="text-center pt-8">
-                    <h1 className="text-3xl font-bold text-white mb-2">Game Lobby</h1>
+                    <h1 className="text-3xl font-bold text-white mb-2">
+                        Game Lobby
+                    </h1>
                     <p className="text-white/80">Host Dashboard</p>
                 </div>
-                <LobbyHead
+                <LobbyHead gameRoom={gameRoom} roomId={roomId || ""} />
+                <ScrollList
                     gameRoom={gameRoom}
-                    roomId={roomId || ""}
+                    websocket={websocket}
+                    roomId={roomId}
                 />
-                <ScrollList gameRoom={gameRoom} websocket={websocket} roomId={roomId} />
             </div>
         </div>
     );
 }
 
-function ScrollList(props: Readonly<{ gameRoom?: GameRoom; websocket?: WebSocket | null; roomId?: string }>) {
+function ScrollList(
+    props: Readonly<{
+        gameRoom?: GameRoom;
+        websocket?: WebSocket | null;
+        roomId?: string;
+    }>
+) {
     const doOrDies = props.gameRoom ? props.gameRoom.doOrDies : [];
 
     const handleReject = (doOrDieId: string) => {
@@ -57,8 +66,8 @@ function ScrollList(props: Readonly<{ gameRoom?: GameRoom; websocket?: WebSocket
                 type: "REMOVE_DO_OR_DIE",
                 message: {
                     roomId: props.roomId,
-                    doOrDieId: doOrDieId
-                }
+                    doOrDieId: doOrDieId,
+                },
             };
             props.websocket.send(JSON.stringify(rejectMessage));
             console.log("Sent reject message:", rejectMessage);
@@ -79,7 +88,9 @@ function ScrollList(props: Readonly<{ gameRoom?: GameRoom; websocket?: WebSocket
                 {doOrDies.length === 0 ? (
                     <div className="text-center py-8 text-gray-500">
                         <p>No challenges yet...</p>
-                        <p className="text-sm">Players can submit do or die challenges</p>
+                        <p className="text-sm">
+                            Players can submit do or die challenges
+                        </p>
                     </div>
                 ) : (
                     doOrDies.map((doOrDie) => (
@@ -123,7 +134,9 @@ function LobbyHead(props: Readonly<{ gameRoom?: GameRoom; roomId: string }>) {
             {/* Players Section */}
             <div className="mb-6">
                 <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-lg font-semibold text-gray-800">Players</h3>
+                    <h3 className="text-lg font-semibold text-gray-800">
+                        Players
+                    </h3>
                     <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm font-medium">
                         {players.length} joined
                     </span>
@@ -136,9 +149,14 @@ function LobbyHead(props: Readonly<{ gameRoom?: GameRoom; roomId: string }>) {
                         </p>
                     ) : (
                         players.map((playerName, index) => (
-                            <div key={index} className="flex items-center p-2 bg-gray-50 rounded-lg">
+                            <div
+                                key={index}
+                                className="flex items-center p-2 bg-gray-50 rounded-lg"
+                            >
                                 <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
-                                <span className="text-gray-800 font-medium">{playerName}</span>
+                                <span className="text-gray-800 font-medium">
+                                    {playerName}
+                                </span>
                             </div>
                         ))
                     )}
@@ -166,7 +184,7 @@ function hostRoom(
     roomId: string,
     setGameRoom: (gameRoom: GameRoom) => void
 ): WebSocket {
-    const hostConnection = new WebSocket("ws://localhost:8080/ws/game");
+    const hostConnection = new WebSocket("ws://localhost:8080/ws/host");
     const hostJoinMessage = {
         type: "HOST_JOIN",
         message: { roomId: roomId },

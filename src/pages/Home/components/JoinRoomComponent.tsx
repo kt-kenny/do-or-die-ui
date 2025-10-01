@@ -3,10 +3,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 export default function JoinRoomComponent() {
     const [roomId, setRoomId] = useState<string>("");
     const [playerName, setPlayerName] = useState<string>("");
+    const [isLoading, setIsLoading] = useState<boolean>(false);
+    const [error, setError] = useState<string>("");
     const navigate = useNavigate();
 
     return (
@@ -16,7 +19,9 @@ export default function JoinRoomComponent() {
             </Label>
             <div className="space-y-4">
                 <div className="space-y-2">
-                    <Label className="text-lg font-semibold text-gray-700">Room ID</Label>
+                    <Label className="text-lg font-semibold text-gray-700">
+                        Room ID
+                    </Label>
                     <Input
                         onChange={(e) => setRoomId(e.target.value)}
                         placeholder="Enter room ID..."
@@ -24,7 +29,9 @@ export default function JoinRoomComponent() {
                     />
                 </div>
                 <div className="space-y-2">
-                    <Label className="text-lg font-semibold text-gray-700">Player Name</Label>
+                    <Label className="text-lg font-semibold text-gray-700">
+                        Player Name
+                    </Label>
                     <Input
                         onChange={(e) => setPlayerName(e.target.value)}
                         placeholder="Enter your name..."
@@ -32,27 +39,73 @@ export default function JoinRoomComponent() {
                     />
                 </div>
                 <Button
-                    onClick={() => joinRoom(roomId, playerName, navigate)}
-                    disabled={!roomId.trim() || !playerName.trim()}
+                    onClick={() =>
+                        joinRoom(
+                            roomId,
+                            playerName,
+                            navigate,
+                            setIsLoading,
+                            setError
+                        )
+                    }
+                    disabled={!roomId.trim() || !playerName.trim() || isLoading}
                     className="w-full text-lg py-4 bg-orange-600 hover:bg-orange-700 text-white disabled:bg-gray-400"
                 >
-                    Join Game Room
+                    {isLoading ? "Joining..." : "Join Game Room"}
                 </Button>
+                {error && (
+                    <div className="mt-3 p-3 bg-red-100 border border-red-300 rounded-lg">
+                        <p className="text-red-800 text-sm">{error}</p>
+                    </div>
+                )}
             </div>
         </div>
     );
 }
 
-function joinRoom(
+async function joinRoom(
     roomId: string,
     playerName: string,
-    navigate: (path: string, options?: { state?: any }) => void
+    navigate: (path: string, options?: { state?: any }) => void,
+    setIsLoading: (loading: boolean) => void,
+    setError: (error: string) => void
 ) {
-    if (roomId.trim() && playerName.trim()) {
-        navigate(`/player-lobby/${roomId}`, {
-            state: { playerName }
+    if (!roomId.trim() || !playerName.trim()) {
+        setError("Room ID and player name are required");
+        return;
+    }
+
+    setIsLoading(true);
+    setError("");
+
+    try {
+        const endpoint = import.meta.env.VITE_API_URL + "/players";
+        const response = await axios.post(endpoint, null, {
+            params: {
+                roomId: roomId.trim(),
+                name: playerName.trim(),
+            },
+            withCredentials: true
         });
-    } else {
-        console.error("Room ID and player name are required");
+
+        console.log("Player join response:", response.data);
+
+        // Navigate to player lobby on success
+        navigate(`/player-lobby/${roomId}`, {
+            state: { playerName: playerName.trim() },
+        });
+    } catch (error: any) {
+        console.error("Failed to join room:", error);
+        if (error.response?.data?.message) {
+            setError(error.response.data.message);
+        } else if (error.response?.status === 404) {
+            setError("Room not found. Please check the Room ID.");
+        } else if (error.response?.status === 400) {
+            setError("Invalid room or player data.");
+        } else {
+            setError("Failed to join room. Please try again.");
+        }
+    } finally {
+        setIsLoading(false);
     }
 }
