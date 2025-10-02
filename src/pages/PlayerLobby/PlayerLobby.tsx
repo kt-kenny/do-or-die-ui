@@ -9,6 +9,7 @@ export default function PlayerLobby() {
     const { roomId } = useParams<{ roomId: string }>();
     const location = useLocation();
     const playerName = location.state?.playerName as string;
+    const isReconnect = location.state?.isReconnect as boolean;
 
     const [doOrDieText, setDoOrDieText] = useState<string>("");
     const [websocket, setWebsocket] = useState<WebSocket | null>(null);
@@ -21,6 +22,18 @@ export default function PlayerLobby() {
 
             ws.onopen = () => {
                 setIsConnected(true);
+
+                // Send PLAYER_JOIN or PLAYER_RECONNECT message
+                const messageType = isReconnect ? "PLAYER_RECONNECT" : "PLAYER_JOIN";
+                const message = {
+                    type: messageType,
+                    message: {
+                        roomId: roomId,
+                        playerName: playerName,
+                    },
+                };
+                ws.send(JSON.stringify(message));
+                console.log(`Sent ${messageType} message:`, message);
             };
 
             ws.onmessage = (event) => {
