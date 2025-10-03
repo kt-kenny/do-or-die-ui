@@ -8,7 +8,8 @@ export default function Lobby() {
     const { roomId } = useParams<{ roomId: string }>();
     const navigate = useNavigate();
     const [gameRoom, setGameRoom] = useState<GameRoom | undefined>();
-    const [websocket, setWebsocket] = useState<WebSocket | null>(null);
+    const [websocket, setWebsocket] = useState<WebSocket | undefined>();
+
     /**
      *  Without useEffect the hostRoom would be called on every state change. React components re-render whenever state changes or props change.
      *  The useEffect() pattern ensures one connection per roomId
@@ -27,7 +28,7 @@ export default function Lobby() {
             setWebsocket(ws);
             return () => {
                 ws?.close();
-                setWebsocket(null);
+                setWebsocket(undefined);
             };
         }
     }, [roomId]);
@@ -41,12 +42,21 @@ export default function Lobby() {
                     </h1>
                     <p className="text-white/80">Host Dashboard</p>
                 </div>
-                <LobbyHead gameRoom={gameRoom} roomId={roomId || ""} />
-                <ScrollList
-                    gameRoom={gameRoom}
-                    websocket={websocket}
-                    roomId={roomId}
-                />
+                {gameRoom?.phase === "LOBBY" && (
+                    <>
+                        <LobbyHead
+                            gameRoom={gameRoom}
+                            roomId={roomId || ""}
+                            hostConnection={websocket}
+                        />
+                        <ScrollList
+                            gameRoom={gameRoom}
+                            websocket={websocket}
+                            roomId={roomId || ""}
+                        />
+                    </>
+                )}
+                <p>{gameRoom?.phase}</p>
             </div>
         </div>
     );
@@ -116,7 +126,13 @@ function ScrollList(
     );
 }
 
-function LobbyHead(props: Readonly<{ gameRoom?: GameRoom; roomId: string }>) {
+function LobbyHead(
+    props: Readonly<{
+        gameRoom?: GameRoom;
+        roomId: string;
+        hostConnection?: WebSocket;
+    }>
+) {
     const players = props.gameRoom?.players
         ? Object.values(props.gameRoom.players).map((player) => player.name)
         : [];
@@ -166,7 +182,7 @@ function LobbyHead(props: Readonly<{ gameRoom?: GameRoom; roomId: string }>) {
 
             {/* Start Game Button */}
             <Button
-                onClick={() => console.log("STARTING GAME")}
+                onClick={() => startGame(props.roomId, props.hostConnection)}
                 disabled={players.length === 0}
                 className="w-full text-lg py-4 bg-green-600 hover:bg-green-700 text-white disabled:bg-gray-400"
             >
@@ -216,4 +232,12 @@ function hostRoom(
     };
 
     return hostConnection;
+}
+function startGame(roomId: string, websocket?: WebSocket) {
+    console.log("starting game");
+    const startGameMessage = {
+        type: "START_GAME",
+        message: { roomId: roomId },
+    };
+    websocket?.send(JSON.stringify(startGameMessage));
 }
