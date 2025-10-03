@@ -8,7 +8,7 @@ export type GameRoom = {
     gameBoard: GameBoardTile[];
     doOrDies: DoOrDie[];
     turn: string | null;
-    phase: string | null;
+    phase: string;
 };
 
 type GameBoardTile = {

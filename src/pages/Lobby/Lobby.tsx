@@ -1,11 +1,12 @@
 import { Button } from "@/components/ui/button";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import axios from "axios";
 import type { GameRoom } from "./Model/GameRoom";
 
 export default function Lobby() {
     const { roomId } = useParams<{ roomId: string }>();
+    const navigate = useNavigate();
     const [gameRoom, setGameRoom] = useState<GameRoom | undefined>();
     const [websocket, setWebsocket] = useState<WebSocket | null>(null);
     /**
@@ -58,7 +59,7 @@ function ScrollList(
         roomId?: string;
     }>
 ) {
-    const doOrDies = props.gameRoom ? props.gameRoom.doOrDies : [];
+    const doOrDies = props.gameRoom?.doOrDies ?? [];
 
     const handleReject = (doOrDieId: string) => {
         if (props.websocket && props.roomId) {
@@ -116,7 +117,7 @@ function ScrollList(
 }
 
 function LobbyHead(props: Readonly<{ gameRoom?: GameRoom; roomId: string }>) {
-    const players = props.gameRoom
+    const players = props.gameRoom?.players
         ? Object.values(props.gameRoom.players).map((player) => player.name)
         : [];
     const displayRoomId = props.gameRoom?.roomId || props.roomId;
@@ -210,8 +211,8 @@ function hostRoom(
         console.error("WebSocket error:", error);
     };
 
-    hostConnection.onclose = () => {
-        console.log("WebSocket connection closed");
+    hostConnection.onclose = (event) => {
+        console.log("WebSocket connection closed", event.code, event.reason);
     };
 
     return hostConnection;

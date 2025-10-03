@@ -24,7 +24,9 @@ export default function PlayerLobby() {
                 setIsConnected(true);
 
                 // Send PLAYER_JOIN or PLAYER_RECONNECT message
-                const messageType = isReconnect ? "PLAYER_RECONNECT" : "PLAYER_JOIN";
+                const messageType = isReconnect
+                    ? "PLAYER_RECONNECT"
+                    : "PLAYER_JOIN";
                 const message = {
                     type: messageType,
                     message: {
@@ -50,8 +52,12 @@ export default function PlayerLobby() {
                 setIsConnected(false);
             };
 
-            ws.onclose = () => {
-                console.log("WebSocket connection closed");
+            ws.onclose = (event) => {
+                console.log(
+                    "WebSocket connection closed",
+                    event.code,
+                    event.reason
+                );
                 setIsConnected(false);
             };
 
@@ -64,7 +70,7 @@ export default function PlayerLobby() {
         } else {
             navigate("/");
         }
-    }, [roomId, playerName]);
+    }, [roomId, playerName, isReconnect, navigate]);
 
     const handleSubmitDoOrDie = () => {
         if (websocket && doOrDieText.trim() && roomId && playerName) {
