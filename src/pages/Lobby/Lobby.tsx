@@ -3,12 +3,17 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import axios from "axios";
 import type { GameRoom } from "./Model/GameRoom";
+import type {
+    AnimateEventsMessage,
+    AnimationEvent,
+} from "./Model/WebSocketMessages";
 
 export default function Lobby() {
     const { roomId } = useParams<{ roomId: string }>();
     const navigate = useNavigate();
     const [gameRoom, setGameRoom] = useState<GameRoom | undefined>();
     const [websocket, setWebsocket] = useState<WebSocket | undefined>();
+    const [animationMessage, setAnimationMessage] = useState<string>("");
 
     /**
      *  Without useEffect the hostRoom would be called on every state change. React components re-render whenever state changes or props change.
@@ -24,7 +29,12 @@ export default function Lobby() {
                 );
 
             // Set up WebSocket connection
-            const ws = hostRoom(roomId, setGameRoom);
+            const ws = hostRoom(
+                roomId,
+                setGameRoom,
+                handleAnimateEvents,
+                setAnimationMessage
+            );
             setWebsocket(ws);
             return () => {
                 ws?.close();
@@ -32,6 +42,73 @@ export default function Lobby() {
             };
         }
     }, [roomId]);
+
+    const handleAnimateEvents = async (
+        message: AnimateEventsMessage,
+        setGameRoom: (gameRoom: GameRoom) => void,
+        setAnimationMessage: (message: string) => void,
+        websocket: WebSocket
+    ) => {
+        // Update phase to HOST_ANIMATE
+        setGameRoom((prev) =>
+            prev ? { ...prev, phase: "HOST_ANIMATE" } : prev
+        );
+
+        // Loop through each event
+        for (const event of message.events) {
+            await processAnimationEvent(event, setGameRoom, setAnimationMessage);
+        }
+
+        // Clear animation message
+        setAnimationMessage("");
+
+        // Send HOST_DONE_ANIMATE message
+        const doneMessage = {
+            type: "HOST_DONE_ANIMATE",
+            message: { roomId: message.roomId },
+        };
+        websocket.send(JSON.stringify(doneMessage));
+        console.log("Sent HOST_DONE_ANIMATE message:", doneMessage);
+    };
+
+    const processAnimationEvent = async (
+        event: AnimationEvent,
+        setGameRoom: (gameRoom: GameRoom) => void,
+        setAnimationMessage: (message: string) => void
+    ): Promise<void> => {
+        return new Promise((resolve) => {
+            if (event.type === "DICE_ROLL") {
+                setAnimationMessage(`Rolled a ${event.number}!`);
+                setTimeout(resolve, 2000);
+            } else if (event.type === "MOVE_PLAYER") {
+                setAnimationMessage(
+                    `${event.playerName} moves ${event.spacesMoved} spaces`
+                );
+
+                // Update player's tile number
+                setGameRoom((prev) => {
+                    if (!prev) return prev;
+
+                    const updatedPlayers = { ...prev.players };
+                    for (const playerId in updatedPlayers) {
+                        if (updatedPlayers[playerId].name === event.playerName) {
+                            updatedPlayers[playerId] = {
+                                ...updatedPlayers[playerId],
+                                tileNumber:
+                                    updatedPlayers[playerId].tileNumber +
+                                    event.spacesMoved,
+                            };
+                            break;
+                        }
+                    }
+
+                    return { ...prev, players: updatedPlayers };
+                });
+
+                setTimeout(resolve, 2000);
+            }
+        });
+    };
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-amber-600 to-amber-800 p-4">
@@ -56,6 +133,18 @@ export default function Lobby() {
                         />
                     </>
                 )}
+
+                {/* Animation Popup */}
+                {animationMessage && (
+                    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+                        <div className="bg-white rounded-lg p-8 shadow-2xl max-w-md">
+                            <h2 className="text-2xl font-bold text-gray-800 text-center">
+                                {animationMessage}
+                            </h2>
+                        </div>
+                    </div>
+                )}
+
                 <pre>{gameRoom ? JSON.stringify(gameRoom, null, 2) : ""}</pre>
             </div>
         </div>
@@ -199,7 +288,14 @@ async function getGameState(roomId: string): Promise<GameRoom> {
 }
 function hostRoom(
     roomId: string,
-    setGameRoom: (gameRoom: GameRoom) => void
+    setGameRoom: (gameRoom: GameRoom) => void,
+    handleAnimateEvents: (
+        message: AnimateEventsMessage,
+        setGameRoom: (gameRoom: GameRoom) => void,
+        setAnimationMessage: (message: string) => void,
+        websocket: WebSocket
+    ) => void,
+    setAnimationMessage: (message: string) => void
 ): WebSocket {
     const hostConnection = new WebSocket("ws://localhost:8080/ws/host");
     const hostJoinMessage = {
@@ -216,9 +312,15 @@ function hostRoom(
             const data = JSON.parse(event.data);
             console.log("WebSocket message received:", data);
 
-            // Parse the message as GameRoom and update state
-            if (data.type == "GAME_STATE_UPDATE") {
-                setGameRoom(data.gameRoom as GameRoom); // TODO: make a lobby message wrapper
+            if (data.type === "GAME_STATE_UPDATE") {
+                setGameRoom(data.gameRoom as GameRoom);
+            } else if (data.type === "ANIMATE_EVENTS") {
+                handleAnimateEvents(
+                    data as AnimateEventsMessage,
+                    setGameRoom,
+                    setAnimationMessage,
+                    hostConnection
+                );
             }
         } catch (error) {
             console.error("Failed to parse WebSocket message:", error);
