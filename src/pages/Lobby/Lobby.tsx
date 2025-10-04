@@ -1,13 +1,20 @@
 import { Button } from "@/components/ui/button";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import axios from "axios";
 import type { GameRoom } from "./Model/GameRoom";
+import type {
+    AnimateEventsMessage,
+    AnimationEvent,
+} from "./Model/WebSocketMessages";
 
 export default function Lobby() {
     const { roomId } = useParams<{ roomId: string }>();
+    const navigate = useNavigate();
     const [gameRoom, setGameRoom] = useState<GameRoom | undefined>();
-    const [websocket, setWebsocket] = useState<WebSocket | null>(null);
+    const [websocket, setWebsocket] = useState<WebSocket | undefined>();
+    const [animationMessage, setAnimationMessage] = useState<string>("");
+
     /**
      *  Without useEffect the hostRoom would be called on every state change. React components re-render whenever state changes or props change.
      *  The useEffect() pattern ensures one connection per roomId
@@ -22,34 +29,136 @@ export default function Lobby() {
                 );
 
             // Set up WebSocket connection
-            const ws = hostRoom(roomId, setGameRoom);
+            const ws = hostRoom(
+                roomId,
+                setGameRoom,
+                handleAnimateEvents,
+                setAnimationMessage
+            );
             setWebsocket(ws);
             return () => {
                 ws?.close();
-                setWebsocket(null);
+                setWebsocket(undefined);
             };
         }
     }, [roomId]);
+
+    const handleAnimateEvents = async (
+        message: AnimateEventsMessage,
+        setGameRoom: (gameRoom: GameRoom) => void,
+        setAnimationMessage: (message: string) => void,
+        websocket: WebSocket
+    ) => {
+        // Update phase to HOST_ANIMATE
+        setGameRoom((prev) =>
+            prev ? { ...prev, phase: "HOST_ANIMATE" } : prev
+        );
+
+        // Loop through each event
+        for (const event of message.events) {
+            await processAnimationEvent(event, setGameRoom, setAnimationMessage);
+        }
+
+        // Clear animation message
+        setAnimationMessage("");
+
+        // Send HOST_DONE_ANIMATE message
+        const doneMessage = {
+            type: "HOST_DONE_ANIMATE",
+            message: { roomId: message.roomId },
+        };
+        websocket.send(JSON.stringify(doneMessage));
+        console.log("Sent HOST_DONE_ANIMATE message:", doneMessage);
+    };
+
+    const processAnimationEvent = async (
+        event: AnimationEvent,
+        setGameRoom: (gameRoom: GameRoom) => void,
+        setAnimationMessage: (message: string) => void
+    ): Promise<void> => {
+        return new Promise((resolve) => {
+            if (event.type === "DICE_ROLL") {
+                setAnimationMessage(`Rolled a ${event.number}!`);
+                setTimeout(resolve, 2000);
+            } else if (event.type === "MOVE_PLAYER") {
+                setAnimationMessage(
+                    `${event.playerName} moves ${event.spacesMoved} spaces`
+                );
+
+                // Update player's tile number
+                setGameRoom((prev) => {
+                    if (!prev) return prev;
+
+                    const updatedPlayers = { ...prev.players };
+                    for (const playerId in updatedPlayers) {
+                        if (updatedPlayers[playerId].name === event.playerName) {
+                            updatedPlayers[playerId] = {
+                                ...updatedPlayers[playerId],
+                                tileNumber:
+                                    updatedPlayers[playerId].tileNumber +
+                                    event.spacesMoved,
+                            };
+                            break;
+                        }
+                    }
+
+                    return { ...prev, players: updatedPlayers };
+                });
+
+                setTimeout(resolve, 2000);
+            }
+        });
+    };
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-amber-600 to-amber-800 p-4">
             <div className="max-w-md mx-auto space-y-6">
                 <div className="text-center pt-8">
-                    <h1 className="text-3xl font-bold text-white mb-2">Game Lobby</h1>
+                    <h1 className="text-3xl font-bold text-white mb-2">
+                        Game Lobby
+                    </h1>
                     <p className="text-white/80">Host Dashboard</p>
                 </div>
-                <LobbyHead
-                    gameRoom={gameRoom}
-                    roomId={roomId || ""}
-                />
-                <ScrollList gameRoom={gameRoom} websocket={websocket} roomId={roomId} />
+                {gameRoom?.phase === "LOBBY" && (
+                    <>
+                        <LobbyHead
+                            gameRoom={gameRoom}
+                            roomId={roomId || ""}
+                            hostConnection={websocket}
+                        />
+                        <ScrollList
+                            gameRoom={gameRoom}
+                            websocket={websocket}
+                            roomId={roomId || ""}
+                        />
+                    </>
+                )}
+
+                {/* Animation Popup */}
+                {animationMessage && (
+                    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+                        <div className="bg-white rounded-lg p-8 shadow-2xl max-w-md">
+                            <h2 className="text-2xl font-bold text-gray-800 text-center">
+                                {animationMessage}
+                            </h2>
+                        </div>
+                    </div>
+                )}
+
+                <pre>{gameRoom ? JSON.stringify(gameRoom, null, 2) : ""}</pre>
             </div>
         </div>
     );
 }
 
-function ScrollList(props: Readonly<{ gameRoom?: GameRoom; websocket?: WebSocket | null; roomId?: string }>) {
-    const doOrDies = props.gameRoom ? props.gameRoom.doOrDies : [];
+function ScrollList(
+    props: Readonly<{
+        gameRoom?: GameRoom;
+        websocket?: WebSocket | null;
+        roomId?: string;
+    }>
+) {
+    const doOrDies = props.gameRoom?.doOrDies ?? [];
 
     const handleReject = (doOrDieId: string) => {
         if (props.websocket && props.roomId) {
@@ -57,8 +166,8 @@ function ScrollList(props: Readonly<{ gameRoom?: GameRoom; websocket?: WebSocket
                 type: "REMOVE_DO_OR_DIE",
                 message: {
                     roomId: props.roomId,
-                    doOrDieId: doOrDieId
-                }
+                    doOrDieId: doOrDieId,
+                },
             };
             props.websocket.send(JSON.stringify(rejectMessage));
             console.log("Sent reject message:", rejectMessage);
@@ -79,7 +188,9 @@ function ScrollList(props: Readonly<{ gameRoom?: GameRoom; websocket?: WebSocket
                 {doOrDies.length === 0 ? (
                     <div className="text-center py-8 text-gray-500">
                         <p>No challenges yet...</p>
-                        <p className="text-sm">Players can submit do or die challenges</p>
+                        <p className="text-sm">
+                            Players can submit do or die challenges
+                        </p>
                     </div>
                 ) : (
                     doOrDies.map((doOrDie) => (
@@ -104,8 +215,14 @@ function ScrollList(props: Readonly<{ gameRoom?: GameRoom; websocket?: WebSocket
     );
 }
 
-function LobbyHead(props: Readonly<{ gameRoom?: GameRoom; roomId: string }>) {
-    const players = props.gameRoom
+function LobbyHead(
+    props: Readonly<{
+        gameRoom?: GameRoom;
+        roomId: string;
+        hostConnection?: WebSocket;
+    }>
+) {
+    const players = props.gameRoom?.players
         ? Object.values(props.gameRoom.players).map((player) => player.name)
         : [];
     const displayRoomId = props.gameRoom?.roomId || props.roomId;
@@ -123,7 +240,9 @@ function LobbyHead(props: Readonly<{ gameRoom?: GameRoom; roomId: string }>) {
             {/* Players Section */}
             <div className="mb-6">
                 <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-lg font-semibold text-gray-800">Players</h3>
+                    <h3 className="text-lg font-semibold text-gray-800">
+                        Players
+                    </h3>
                     <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm font-medium">
                         {players.length} joined
                     </span>
@@ -136,9 +255,14 @@ function LobbyHead(props: Readonly<{ gameRoom?: GameRoom; roomId: string }>) {
                         </p>
                     ) : (
                         players.map((playerName, index) => (
-                            <div key={index} className="flex items-center p-2 bg-gray-50 rounded-lg">
+                            <div
+                                key={index}
+                                className="flex items-center p-2 bg-gray-50 rounded-lg"
+                            >
                                 <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
-                                <span className="text-gray-800 font-medium">{playerName}</span>
+                                <span className="text-gray-800 font-medium">
+                                    {playerName}
+                                </span>
                             </div>
                         ))
                     )}
@@ -147,7 +271,7 @@ function LobbyHead(props: Readonly<{ gameRoom?: GameRoom; roomId: string }>) {
 
             {/* Start Game Button */}
             <Button
-                onClick={() => console.log("STARTING GAME")}
+                onClick={() => startGame(props.roomId, props.hostConnection)}
                 disabled={players.length === 0}
                 className="w-full text-lg py-4 bg-green-600 hover:bg-green-700 text-white disabled:bg-gray-400"
             >
@@ -164,9 +288,16 @@ async function getGameState(roomId: string): Promise<GameRoom> {
 }
 function hostRoom(
     roomId: string,
-    setGameRoom: (gameRoom: GameRoom) => void
+    setGameRoom: (gameRoom: GameRoom) => void,
+    handleAnimateEvents: (
+        message: AnimateEventsMessage,
+        setGameRoom: (gameRoom: GameRoom) => void,
+        setAnimationMessage: (message: string) => void,
+        websocket: WebSocket
+    ) => void,
+    setAnimationMessage: (message: string) => void
 ): WebSocket {
-    const hostConnection = new WebSocket("ws://localhost:8080/ws/game");
+    const hostConnection = new WebSocket("ws://localhost:8080/ws/host");
     const hostJoinMessage = {
         type: "HOST_JOIN",
         message: { roomId: roomId },
@@ -181,8 +312,16 @@ function hostRoom(
             const data = JSON.parse(event.data);
             console.log("WebSocket message received:", data);
 
-            // Parse the message as GameRoom and update state
-            setGameRoom(data.events[0].gameRoom as GameRoom); // TODO: make a lobby message wrapper
+            if (data.type === "GAME_STATE_UPDATE") {
+                setGameRoom(data.gameRoom as GameRoom);
+            } else if (data.type === "ANIMATE_EVENTS") {
+                handleAnimateEvents(
+                    data as AnimateEventsMessage,
+                    setGameRoom,
+                    setAnimationMessage,
+                    hostConnection
+                );
+            }
         } catch (error) {
             console.error("Failed to parse WebSocket message:", error);
         }
@@ -192,9 +331,17 @@ function hostRoom(
         console.error("WebSocket error:", error);
     };
 
-    hostConnection.onclose = () => {
-        console.log("WebSocket connection closed");
+    hostConnection.onclose = (event) => {
+        console.log("WebSocket connection closed", event.code, event.reason);
     };
 
     return hostConnection;
+}
+function startGame(roomId: string, websocket?: WebSocket) {
+    console.log("starting game");
+    const startGameMessage = {
+        type: "START_GAME",
+        message: { roomId: roomId },
+    };
+    websocket?.send(JSON.stringify(startGameMessage));
 }

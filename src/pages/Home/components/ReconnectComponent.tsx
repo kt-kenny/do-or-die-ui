@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-export default function JoinRoomComponent() {
+export default function ReconnectComponent() {
     const [roomId, setRoomId] = useState<string>("");
     const [playerName, setPlayerName] = useState<string>("");
     const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -14,7 +14,7 @@ export default function JoinRoomComponent() {
     return (
         <div className="bg-white rounded-lg p-6 shadow-lg">
             <Label className="text-2xl font-bold text-gray-800 mb-4 block text-center">
-                Join a Room
+                Reconnect to Room
             </Label>
             <div className="space-y-4">
                 <div className="space-y-2">
@@ -39,7 +39,7 @@ export default function JoinRoomComponent() {
                 </div>
                 <Button
                     onClick={() =>
-                        joinRoom(
+                        reconnectToRoom(
                             roomId,
                             playerName,
                             navigate,
@@ -50,7 +50,7 @@ export default function JoinRoomComponent() {
                     disabled={!roomId.trim() || !playerName.trim() || isLoading}
                     className="w-full text-lg py-4 bg-orange-600 hover:bg-orange-700 text-white disabled:bg-gray-400"
                 >
-                    {isLoading ? "Joining..." : "Join Game Room"}
+                    {isLoading ? "Reconnecting..." : "Reconnect to Game"}
                 </Button>
                 {error && (
                     <div className="mt-3 p-3 bg-red-100 border border-red-300 rounded-lg">
@@ -62,7 +62,7 @@ export default function JoinRoomComponent() {
     );
 }
 
-function joinRoom(
+function reconnectToRoom(
     roomId: string,
     playerName: string,
     navigate: (path: string, options?: { state?: any }) => void,
@@ -79,6 +79,6 @@ function joinRoom(
 
     // Navigate to player lobby where WebSocket connection will be established
     navigate(`/player-lobby/${roomId}`, {
-        state: { playerName: playerName.trim() },
+        state: { playerName: playerName.trim(), isReconnect: true },
     });
 }
