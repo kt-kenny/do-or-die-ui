@@ -56,7 +56,7 @@ export default function Lobby() {
                         />
                     </>
                 )}
-                <p>{gameRoom?.phase}</p>
+                <pre>{gameRoom ? JSON.stringify(gameRoom, null, 2) : ""}</pre>
             </div>
         </div>
     );
@@ -217,7 +217,9 @@ function hostRoom(
             console.log("WebSocket message received:", data);
 
             // Parse the message as GameRoom and update state
-            setGameRoom(data.events[0].gameRoom as GameRoom); // TODO: make a lobby message wrapper
+            if (data.type == "GAME_STATE_UPDATE") {
+                setGameRoom(data.gameRoom as GameRoom); // TODO: make a lobby message wrapper
+            }
         } catch (error) {
             console.error("Failed to parse WebSocket message:", error);
         }
